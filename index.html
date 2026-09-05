@@ -108,49 +108,21 @@
       display: block;
       width: 100%;
       height: auto;
-      transform-origin: 52% 38%;
-      will-change: transform;
-      animation: kenBurns 28s ease-in-out infinite alternate;
     }
-
-    /* Soft shimmer over sky / beach band (upper ~55%) */
-    .card-shimmer {
-      pointer-events: none;
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      z-index: 2;
-      background:
-        linear-gradient(
-          105deg,
-          transparent 0%,
-          transparent 38%,
-          rgba(255, 255, 255, 0.0) 42%,
-          rgba(255, 252, 240, 0.22) 48%,
-          rgba(255, 255, 255, 0.08) 52%,
-          transparent 58%,
-          transparent 100%
-        );
-      background-size: 220% 100%;
-      mix-blend-mode: soft-light;
-      opacity: 0.85;
-      animation: shimmerSweep 9s ease-in-out infinite;
-      -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 52%, transparent 72%);
-      mask-image: linear-gradient(to bottom, #000 0%, #000 52%, transparent 72%);
-    }
-
-    /* Lightweight sparkle canvas (sky/beach) */
-    .sparkle-canvas {
-      pointer-events: none;
+    .scenery-canvas {
+      display: none;
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
-      z-index: 3;
       border-radius: inherit;
+      pointer-events: none;
+    }
+    .scenery-canvas.is-on {
+      display: block;
     }
 
-    /* Floating petal accents around the card */
+    /* Floating petal accents (very subtle) */
     .petal-field {
       pointer-events: none;
       position: absolute;
@@ -160,30 +132,30 @@
     }
     .petal {
       position: absolute;
-      width: 10px;
-      height: 14px;
+      width: 9px;
+      height: 12px;
       border-radius: 50% 50% 50% 0;
       background: linear-gradient(145deg, #f2d6c4 0%, #e8b4a0 45%, #c98a78 100%);
-      opacity: 0.55;
+      opacity: 0.35;
       transform: rotate(35deg);
       filter: blur(0.2px);
-      animation: petalDrift var(--dur, 14s) ease-in-out infinite;
+      animation: petalDrift var(--dur, 16s) ease-in-out infinite;
       animation-delay: var(--delay, 0s);
       left: var(--x, 10%);
       top: var(--y, 0%);
     }
     .petal.leaf {
-      width: 12px;
-      height: 18px;
+      width: 11px;
+      height: 16px;
       border-radius: 0 70% 40% 70%;
       background: linear-gradient(160deg, #a8c09a 0%, #6f8f6a 70%, #557554 100%);
-      opacity: 0.4;
+      opacity: 0.28;
     }
     .petal.gold {
       background: linear-gradient(145deg, #f0e0b8 0%, #d4b36a 55%, #b8954a 100%);
-      opacity: 0.45;
-      width: 8px;
-      height: 11px;
+      opacity: 0.3;
+      width: 7px;
+      height: 10px;
     }
 
     .details {
@@ -288,41 +260,26 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes kenBurns {
-      0%   { transform: scale(1) translate(0, 0); }
-      33%  { transform: scale(1.045) translate(-1.2%, -0.6%); }
-      66%  { transform: scale(1.06) translate(0.8%, -1.1%); }
-      100% { transform: scale(1.03) translate(-0.4%, 0.5%); }
-    }
-
-    @keyframes shimmerSweep {
-      0%, 12% { background-position: 120% 0; opacity: 0.35; }
-      45%, 55% { background-position: 40% 0; opacity: 0.9; }
-      88%, 100% { background-position: -20% 0; opacity: 0.4; }
-    }
-
     @keyframes petalDrift {
       0% {
         transform: translate3d(0, 0, 0) rotate(20deg) scale(1);
         opacity: 0;
       }
-      8% { opacity: 0.55; }
+      8% { opacity: 0.35; }
       50% {
-        transform: translate3d(18px, 42px, 0) rotate(140deg) scale(1.05);
-        opacity: 0.45;
+        transform: translate3d(14px, 36px, 0) rotate(140deg) scale(1.02);
+        opacity: 0.28;
       }
-      92% { opacity: 0.35; }
+      92% { opacity: 0.2; }
       100% {
-        transform: translate3d(-12px, 88px, 0) rotate(260deg) scale(0.92);
+        transform: translate3d(-10px, 78px, 0) rotate(260deg) scale(0.92);
         opacity: 0;
       }
     }
 
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; transition: none !important; }
-      .invite-card { transform: none !important; }
-      .card-shimmer,
-      .sparkle-canvas,
+      .scenery-canvas { display: none !important; }
       .petal-field { display: none !important; }
     }
   </style>
@@ -347,8 +304,13 @@
           height="933"
           alt="Wedding invitation for Thao and Trung — Saturday 26 December 2026 at 4:00 PM, Furama Resort, Da Nang"
         />
-        <div class="card-shimmer" aria-hidden="true"></div>
-        <canvas class="sparkle-canvas" id="sparkle-canvas" aria-hidden="true"></canvas>
+        <canvas
+          class="scenery-canvas"
+          id="scenery-canvas"
+          width="1400"
+          height="933"
+          aria-hidden="true"
+        ></canvas>
       </figure>
     </div>
 
@@ -468,114 +430,9 @@
           }).catch(function () {});
         });
       }
-
-      var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (reduceMotion) return;
-
-      /* Floating petal / leaf accents around the card */
-      var field = document.getElementById("petal-field");
-      if (field) {
-        var specs = [
-          { x: "4%",  y: "8%",  dur: "16s", delay: "0s",    cls: "" },
-          { x: "88%", y: "12%", dur: "18s", delay: "2.2s",  cls: "leaf" },
-          { x: "12%", y: "55%", dur: "14s", delay: "1s",    cls: "gold" },
-          { x: "92%", y: "48%", dur: "17s", delay: "3.5s",  cls: "" },
-          { x: "6%",  y: "78%", dur: "15s", delay: "0.8s",  cls: "leaf" },
-          { x: "78%", y: "72%", dur: "19s", delay: "4s",    cls: "gold" },
-          { x: "48%", y: "-2%", dur: "13s", delay: "1.6s",  cls: "" },
-          { x: "62%", y: "90%", dur: "16s", delay: "2.8s",  cls: "leaf" }
-        ];
-        specs.forEach(function (s) {
-          var el = document.createElement("span");
-          el.className = "petal" + (s.cls ? " " + s.cls : "");
-          el.style.setProperty("--x", s.x);
-          el.style.setProperty("--y", s.y);
-          el.style.setProperty("--dur", s.dur);
-          el.style.setProperty("--delay", s.delay);
-          field.appendChild(el);
-        });
-      }
-
-      /* Soft light motes over beach/sky band */
-      var canvas = document.getElementById("sparkle-canvas");
-      var wrap = canvas && canvas.parentElement;
-      if (!canvas || !wrap) return;
-
-      var ctx = canvas.getContext("2d");
-      var particles = [];
-      var raf = 0;
-      var last = 0;
-
-      function resize() {
-        var rect = wrap.getBoundingClientRect();
-        var dpr = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-        canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-        canvas.style.width = rect.width + "px";
-        canvas.style.height = rect.height + "px";
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        return rect;
-      }
-
-      function spawn(w, h, n) {
-        particles = [];
-        for (var i = 0; i < n; i++) {
-          particles.push({
-            x: Math.random() * w,
-            y: Math.random() * h * 0.58,
-            r: 0.6 + Math.random() * 1.6,
-            a: 0.15 + Math.random() * 0.45,
-            vx: (Math.random() - 0.5) * 0.12,
-            vy: -0.02 - Math.random() * 0.08,
-            phase: Math.random() * Math.PI * 2,
-            speed: 0.4 + Math.random() * 0.8
-          });
-        }
-      }
-
-      function tick(t) {
-        raf = requestAnimationFrame(tick);
-        if (!last) last = t;
-        var dt = Math.min(32, t - last) / 16.67;
-        last = t;
-        var w = canvas.clientWidth;
-        var h = canvas.clientHeight;
-        ctx.clearRect(0, 0, w, h);
-        for (var i = 0; i < particles.length; i++) {
-          var p = particles[i];
-          p.phase += 0.02 * p.speed * dt;
-          p.x += (p.vx + Math.sin(p.phase) * 0.08) * dt;
-          p.y += p.vy * dt;
-          if (p.y < -4) { p.y = h * 0.55; p.x = Math.random() * w; }
-          if (p.x < -4) p.x = w + 2;
-          if (p.x > w + 4) p.x = -2;
-          var twinkle = 0.55 + 0.45 * Math.sin(p.phase * 1.7);
-          ctx.beginPath();
-          ctx.fillStyle = "rgba(255, 248, 230," + (p.a * twinkle) + ")";
-          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      var rect = resize();
-      spawn(rect.width, rect.height, 28);
-      raf = requestAnimationFrame(tick);
-
-      window.addEventListener("resize", function () {
-        var r = resize();
-        spawn(r.width, r.height, 28);
-      });
-
-      document.addEventListener("visibilitychange", function () {
-        if (document.hidden) {
-          cancelAnimationFrame(raf);
-          raf = 0;
-          last = 0;
-        } else if (!raf) {
-          raf = requestAnimationFrame(tick);
-        }
-      });
     })();
   </script>
+  <script src="scenery-2d.js" defer></script>
+
 </body>
 </html>
