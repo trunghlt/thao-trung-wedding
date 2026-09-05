@@ -13,7 +13,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
   <style>
     :root {
       --sand: #f4ebe0;
@@ -89,23 +88,40 @@
       font-size: 1.1rem;
     }
 
+    /* WebGL 3D card scene */
     .card-scene {
-      --sx: 0px;
-      --sy: 24px;
-      --sb: 40px;
-      --sa: 0.16;
-      perspective: 1200px;
-      margin: 0.5rem auto 1.75rem;
-    }
-    .card-wrap {
       position: relative;
-      transform-style: preserve-3d;
-      transition: filter 0.2s ease;
-      filter: drop-shadow(var(--sx) var(--sy) var(--sb) rgba(61, 52, 41, var(--sa)));
-      will-change: transform;
+      margin: 0.5rem auto 0.35rem;
+      width: 100%;
+      max-width: 640px;
+      animation: fadeUp 1s 0.15s ease both;
     }
-    .invite-card {
+    .card-stage {
+      position: relative;
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse 70% 55% at 50% 40%, rgba(255, 250, 244, 0.55) 0%, transparent 70%),
+        linear-gradient(180deg, rgba(240, 245, 238, 0.35), rgba(230, 215, 194, 0.25));
+      box-shadow: 0 18px 48px rgba(61, 52, 41, 0.12);
+      border: 1px solid rgba(184, 149, 74, 0.22);
+    }
+    #invite-canvas {
       display: block;
+      width: 100%;
+      height: auto;
+      min-height: 280px;
+      touch-action: none;
+      cursor: grab;
+      outline: none;
+      opacity: 0;
+      transition: opacity 0.45s ease;
+    }
+    .card-scene.is-ready #invite-canvas { opacity: 1; }
+    #invite-canvas:active { cursor: grabbing; }
+    .invite-card {
+      display: none;
       width: 100%;
       height: auto;
       border-radius: 6px;
@@ -114,15 +130,29 @@
       user-select: none;
       -webkit-user-drag: none;
     }
-    .card-hint {
-      margin-top: 1rem;
-      text-align: center;
-      font-size: 0.72rem;
-      letter-spacing: 0.26em;
-      text-transform: uppercase;
-      color: rgba(95, 122, 99, 0.5);
-      font-weight: 400;
+    .card-scene.is-fallback .invite-card {
+      display: block;
+      filter: drop-shadow(0 22px 40px var(--shadow));
     }
+    .card-scene.is-fallback .card-stage {
+      background: transparent;
+      box-shadow: none;
+      border: none;
+      overflow: visible;
+    }
+    .card-hint {
+      text-align: center;
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(138, 160, 140, 0.7);
+      margin: 0.65rem 0 1.4rem;
+      min-height: 1.1em;
+      animation: fadeUp 1s 0.35s ease both;
+    }
+    .card-scene.is-static .card-hint,
+    .card-scene.is-fallback .card-hint { display: none; }
+    .card-scene.is-static #invite-canvas { cursor: default; }
 
     .details {
       display: grid;
@@ -228,8 +258,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; transition: none !important; }
-      .card-hint { display: none; }
-      .card-wrap { transform: none !important; }
+      #invite-canvas { transition: none !important; opacity: 1; }
     }
   </style>
 </head>
@@ -242,18 +271,25 @@
       <p class="sub">request the pleasure of your company</p>
     </header>
 
-    <div class="card-scene">
-      <figure class="card-wrap">
+    <div class="card-scene" id="card-scene">
+      <div class="card-stage">
+        <canvas
+          id="invite-canvas"
+          role="img"
+          aria-label="Interactive 3D wedding invitation for Thao and Trung — Saturday 26 December 2026 at 4:00 PM, Furama Resort, Da Nang"
+        ></canvas>
         <img
           class="invite-card"
+          id="invite-card"
           src="card.jpg"
           width="1400"
           height="933"
           alt="Wedding invitation for Thao and Trung — Saturday 26 December 2026 at 4:00 PM, Furama Resort, Da Nang"
           draggable="false"
+          hidden
         />
-      </figure>
-      <p class="card-hint" id="card-hint">Drag or move to tilt</p>
+      </div>
+      <p class="card-hint" id="card-hint" aria-hidden="true">Drag to orbit · pinch to zoom</p>
     </div>
 
     <section class="details" aria-label="Wedding details">
@@ -372,112 +408,22 @@
           }).catch(function () {});
         });
       }
-
-      // ─────────────────────────────────────────────────────────
-      // D3.js 3D card animation
-      // ─────────────────────────────────────────────────────────
-      var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (!prefersReducedMotion) {
-        var cardScene = d3.select(".card-scene");
-        var cardWrap = d3.select(".card-wrap");
-        var cardEl = cardWrap.node();
-
-        var state = {
-          isInteracting: false,
-          rotateX: 0,
-          rotateY: 0,
-          targetX: 0,
-          targetY: 0
-        };
-
-        // Entrance animation: start tilted/scaled down, ease into place
-        cardWrap
-          .style("transform", "rotateX(8deg) rotateY(-10deg) scale(0.92)")
-          .style("opacity", "0")
-          .transition()
-          .duration(1100)
-          .ease(d3.easeCubicOut)
-          .style("transform", "rotateX(0deg) rotateY(0deg) scale(1)")
-          .style("opacity", "1");
-
-        // Update transform and shadow
-        function updateCard() {
-          var rx = state.rotateX;
-          var ry = state.rotateY;
-          cardWrap.style("transform", "rotateX(" + rx + "deg) rotateY(" + ry + "deg)");
-
-          // Dynamic shadow: shifts with tilt
-          var sx = ry * 1.2;
-          var sy = 24 - rx * 1.5;
-          var sb = 40 + Math.abs(rx) * 0.8 + Math.abs(ry) * 0.8;
-          var sa = 0.16 + (Math.abs(rx) + Math.abs(ry)) * 0.004;
-          cardScene.style("--sx", sx + "px")
-            .style("--sy", sy + "px")
-            .style("--sb", sb + "px")
-            .style("--sa", sa);
-        }
-
-        // Pointer/touch interaction
-        function handleMove(event) {
-          var rect = cardEl.getBoundingClientRect();
-          var clientX = event.clientX !== undefined ? event.clientX : (event.touches && event.touches[0] ? event.touches[0].clientX : rect.left + rect.width / 2);
-          var clientY = event.clientY !== undefined ? event.clientY : (event.touches && event.touches[0] ? event.touches[0].clientY : rect.top + rect.height / 2);
-
-          var x = (clientX - rect.left) / rect.width;
-          var y = (clientY - rect.top) / rect.height;
-
-          // Map to rotation: max ~12deg
-          state.targetX = (0.5 - y) * 24;
-          state.targetY = (x - 0.5) * 24;
-        }
-
-        cardEl.addEventListener("pointermove", handleMove);
-        cardEl.addEventListener("touchmove", function(e) {
-          e.preventDefault();
-          handleMove(e);
-        }, { passive: false });
-
-        cardEl.addEventListener("pointerenter", function() {
-          state.isInteracting = true;
-        });
-
-        cardEl.addEventListener("pointerleave", function() {
-          state.isInteracting = false;
-          state.targetX = 0;
-          state.targetY = 0;
-        });
-
-        cardEl.addEventListener("touchstart", function() {
-          state.isInteracting = true;
-        });
-
-        cardEl.addEventListener("touchend", function() {
-          state.isInteracting = false;
-          state.targetX = 0;
-          state.targetY = 0;
-        });
-
-        // Animation loop: idle float + smooth lerp to target
-        var idleTime = 0;
-        d3.timer(function(elapsed) {
-          // Smooth interpolation to target
-          var lerpSpeed = state.isInteracting ? 0.12 : 0.08;
-          state.rotateX += (state.targetX - state.rotateX) * lerpSpeed;
-          state.rotateY += (state.targetY - state.rotateY) * lerpSpeed;
-
-          // Idle gentle sway when not interacting
-          if (!state.isInteracting) {
-            idleTime += 0.016;
-            var swayX = Math.sin(idleTime * 0.8) * 1.2;
-            var swayY = Math.cos(idleTime * 0.6) * 1.5;
-            state.rotateX += swayX * 0.06;
-            state.rotateY += swayY * 0.06;
-          }
-
-          updateCard();
-        });
-      }
     })();
   </script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="card-3d.js"></script>
+  <noscript>
+    <style>
+      .card-scene .invite-card { display: block !important; }
+      #invite-canvas, .card-hint { display: none !important; }
+    </style>
+  </noscript>
 </body>
 </html>
