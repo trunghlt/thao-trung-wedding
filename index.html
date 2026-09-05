@@ -109,6 +109,11 @@
       width: 100%;
       height: auto;
     }
+    .invite-card.is-hidden {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+    }
     .card-motion {
       display: none;
       position: absolute;
@@ -121,6 +126,7 @@
     }
     .card-motion.is-on {
       display: block;
+      z-index: 2;
     }
 
     .details {
@@ -227,7 +233,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; transition: none !important; }
-      .card-motion { display: none !important; }
+      /* Keep card-motion visible — JS only softens amplitude */
     }
   </style>
 </head>
@@ -378,6 +384,6 @@
       }
     })();
   </script>
-  <script src="card-motion.js" defer></script>
+  <script src="card-motion.js?v=2" defer></script>
 </body>
 </html>
