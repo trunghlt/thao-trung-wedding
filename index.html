@@ -43,6 +43,16 @@
       padding: 1.5rem 1rem 3.5rem;
     }
 
+
+    .guest-hello {
+      display: none;
+      font-size: clamp(1.35rem, 4.5vw, 1.75rem);
+      font-style: italic;
+      color: var(--gold-deep);
+      margin-bottom: 0.85rem;
+    }
+    .guest-hello.is-on { display: block; }
+
     /* Envelope / open */
     .hero-intro {
       text-align: center;
@@ -202,6 +212,7 @@
 <body>
   <main class="page">
     <header class="hero-intro">
+      <p class="guest-hello" id="guest-hello"></p>
       <p class="eyebrow">Wedding invitation</p>
       <h1 class="names">Thao <span class="amp">&amp;</span> Trung</h1>
       <p class="sub">request the pleasure of your company</p>
@@ -245,7 +256,7 @@
 
       <article class="panel span-2">
         <h2>Share</h2>
-        <p class="muted" style="margin-bottom: 0.85rem;">Send this page to your guests</p>
+        <p class="muted" style="margin-bottom: 0.85rem;" id="share-hint">Send this personalized invite</p>
         <div class="actions">
           <button type="button" class="btn primary" id="copy-link">Copy link</button>
           <a class="btn" id="share-native" href="#" hidden>Share…</a>
@@ -260,6 +271,22 @@
 
   <script>
     (function () {
+
+      var params = new URLSearchParams(window.location.search);
+      var guest = (params.get("to") || params.get("guest") || "").trim();
+      var hello = document.getElementById("guest-hello");
+      if (guest) {
+        try { guest = decodeURIComponent(guest); } catch (e) {}
+        guest = guest.replace(/[<>&\"']/g, "");
+        if (guest) {
+          hello.textContent = "Dear " + guest + ",";
+          hello.classList.add("is-on");
+          document.title = "Dear " + guest + " — Thao & Trung";
+          var desc = document.querySelector('meta[name="description"]');
+          if (desc) desc.setAttribute("content", "Dear " + guest + " — you're invited to the wedding of Thao & Trung, 26 December 2026 at Furama Resort, Da Nang.");
+        }
+      }
+
       // ICS calendar download (local afternoon Da Nang = ICT, UTC+7)
       // 16:00 ICT = 09:00 UTC on 2026-12-26; end assume 3 hours
       var ics = [
