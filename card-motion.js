@@ -41,11 +41,11 @@
     return t * t * (3 - 2 * t);
   }
 
-  /* 0 = free to move, 1 = locked (text / center panel) */
+  /* 1 = locked (center text), 0 = free to move (edges / scenery) */
   function textLock(nx, ny) {
-    var textX = 1 - smoothstep(0.2, 0.3, nx) * smoothstep(0.8, 0.7, nx);
-    var textY = 1 - smoothstep(0.14, 0.24, ny) * smoothstep(0.76, 0.64, ny);
-    return clamp(textX * textY, 0, 1);
+    var inX = smoothstep(0.22, 0.32, nx) * (1 - smoothstep(0.68, 0.78, nx));
+    var inY = smoothstep(0.16, 0.26, ny) * (1 - smoothstep(0.62, 0.74, ny));
+    return clamp(inX * inY, 0, 1);
   }
 
   /* Lower-right beach & ocean — expanded a bit, still avoid center text */
