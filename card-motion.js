@@ -48,12 +48,12 @@
     return clamp(textX * textY, 0, 1);
   }
 
-  /* Lower-right beach & ocean only */
+  /* Lower-right beach & ocean — expanded a bit, still avoid center text */
   function waterStrength(nx, ny) {
-    var right = smoothstep(0.48, 0.62, nx);
-    var bottom = smoothstep(0.55, 0.68, ny);
+    var right = smoothstep(0.38, 0.55, nx);
+    var bottom = smoothstep(0.48, 0.62, ny);
     var avoidOrchid =
-      1 - (1 - smoothstep(0.28, 0.45, nx)) * smoothstep(0.72, 0.9, ny);
+      1 - (1 - smoothstep(0.22, 0.4, nx)) * smoothstep(0.72, 0.9, ny);
     var s = right * bottom * avoidOrchid;
     return s * (1 - textLock(nx, ny) * 0.98);
   }
@@ -61,14 +61,14 @@
   /* Left / top foliage corners */
   function foliageStrength(nx, ny) {
     var leftCorner =
-      (1 - smoothstep(0.0, 0.3, nx)) *
+      (1 - smoothstep(0.0, 0.32, nx)) *
       (1 - smoothstep(0.5, 0.82, ny));
     var topLeft =
-      (1 - smoothstep(0.0, 0.38, nx)) * (1 - smoothstep(0.0, 0.4, ny));
+      (1 - smoothstep(0.0, 0.4, nx)) * (1 - smoothstep(0.0, 0.42, ny));
     var topRight =
-      smoothstep(0.68, 0.86, nx) * (1 - smoothstep(0.0, 0.38, ny));
+      smoothstep(0.66, 0.84, nx) * (1 - smoothstep(0.0, 0.4, ny));
     var bottomLeft =
-      (1 - smoothstep(0.0, 0.28, nx)) * smoothstep(0.55, 0.72, ny);
+      (1 - smoothstep(0.0, 0.3, nx)) * smoothstep(0.52, 0.7, ny);
     var s = Math.max(leftCorner, topLeft, topRight, bottomLeft);
     return s * (1 - textLock(nx, ny) * 0.98);
   }
@@ -92,10 +92,10 @@
     ctx.clearRect(0, 0, dw, dh);
     ctx.drawImage(source, 0, 0, iw, ih, 0, 0, dw, dh);
 
-    /* --- Water: gentle horizontal ripples (lower-right only) --- */
-    var waterTop = Math.floor(dh * 0.56);
-    var leftPx = Math.floor(dw * 0.5);
-    var stripH = Math.max(1, Math.round(dw / 1100));
+    /* --- Water: horizontal ripples (lower-right ocean/beach) --- */
+    var waterTop = Math.floor(dh * 0.5);
+    var leftPx = Math.floor(dw * 0.4);
+    var stripH = Math.max(2, Math.round(dw / 900));
 
     ctx.save();
     ctx.beginPath();
@@ -104,11 +104,11 @@
 
     for (var y = waterTop; y < dh; y += stripH) {
       var ny = (y + stripH * 0.5) / dh;
-      var wStr = waterStrength(0.78, ny);
+      var wStr = waterStrength(0.72, ny);
       if (wStr < 0.04) continue;
 
-      /* Small amplitude — tasteful wedding-invite quality */
-      var amp = (1.1 + 1.6 * wStr) * scale;
+      /* Clearly visible but natural ~8–16px at typical card width */
+      var amp = (8 + 8 * wStr) * scale;
       var wave =
         Math.sin(time * 1.35 + ny * 16.0) * 0.55 +
         Math.sin(time * 2.1 + ny * 28.0) * 0.3 +
@@ -135,10 +135,10 @@
     }
     ctx.restore();
 
-    /* --- Foliage: soft column sway on corners only --- */
+    /* --- Foliage: soft column sway + slight vertical bob --- */
     var foliageCols = [
-      { x0: 0.0, x1: 0.26, y0: 0.0, y1: 0.95 },
-      { x0: 0.72, x1: 1.0, y0: 0.0, y1: 0.4 }
+      { x0: 0.0, x1: 0.28, y0: 0.0, y1: 0.95 },
+      { x0: 0.7, x1: 1.0, y0: 0.0, y1: 0.42 }
     ];
     var colW = Math.max(1, Math.round(2 * scale));
 
@@ -155,13 +155,17 @@
         var fStr = foliageStrength(nx, midY);
         if (fStr < 0.06) continue;
 
-        var swayAmp = (0.9 + 1.5 * fStr) * scale;
+        /* ~6–12px sway at typical card width + slight vertical bob */
+        var swayAmp = (6 + 6 * fStr) * scale;
         var sway =
           Math.sin(time * 0.75 + nx * 6.0 + c * 1.3) * 0.65 +
           Math.sin(time * 0.45 + nx * 11.0) * 0.35;
         var ox = sway * swayAmp * fStr;
         var oy =
-          Math.sin(time * 0.55 + nx * 4.0) * 0.35 * fStr * (dh / 600);
+          Math.sin(time * 0.55 + nx * 4.0 + c * 0.8) *
+          (2.5 + 2.5 * fStr) *
+          scale *
+          fStr;
 
         var sx = (x / dw) * iw;
         var sw = (colW / dw) * iw;
@@ -209,13 +213,52 @@
     iw = source.naturalWidth || 1400;
     ih = source.naturalHeight || 933;
     sizeCanvas();
+    /* Hide underlying img so only the animated canvas is visible */
+    img.style.visibility = "hidden";
     canvas.classList.add("is-on");
     startLoop();
   }
 
+  /* Wait until image is ready AND layout has non-zero height (2× rAF). */
+  function waitLayoutThenActivate() {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        sizeCanvas();
+        if (dh < 2) {
+          /* Layout not ready yet — try once more next frame */
+          requestAnimationFrame(function () {
+            activate();
+          });
+          return;
+        }
+        activate();
+      });
+    });
+  }
+
   function onReady() {
-    if (source.complete && source.naturalWidth) activate();
-    else source.addEventListener("load", activate, { once: true });
+    function go() {
+      waitLayoutThenActivate();
+    }
+    if (source.complete && source.naturalWidth) {
+      if (source.decode) {
+        source.decode().then(go).catch(go);
+      } else {
+        go();
+      }
+    } else {
+      source.addEventListener(
+        "load",
+        function () {
+          if (source.decode) {
+            source.decode().then(go).catch(go);
+          } else {
+            go();
+          }
+        },
+        { once: true }
+      );
+    }
   }
 
   onReady();
