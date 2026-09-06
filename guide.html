@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Travel & Activities Guide — Thao & Trung Wedding</title>
+  <meta name="description" content="Family-friendly travel guide for visiting Da Nang, Vietnam around our wedding on 26 December 2026." />
+  <meta name="theme-color" content="#e8dcc8" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --sand: #f4ebe0;
+      --cream: #fffaf4;
+      --sage: #2d7a52;
+      --sage-soft: #4d9970;
+      --gold: #d4a645;
+      --gold-deep: #b8873e;
+      --ink: #2a2218;
+      --shadow: rgba(61, 52, 41, 0.16);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-height: 100vh;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, #f0f5ee 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 100%, #efe4d2 0%, transparent 50%),
+        linear-gradient(165deg, #e7efe8 0%, #f3ebe1 42%, #e6d7c2 100%);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .page {
+      width: min(920px, 100%);
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      animation: fadeUp 0.8s ease both;
+    }
+    .header .back-link {
+      display: inline-block;
+      font-size: 0.9rem;
+      color: var(--sage-soft);
+      text-decoration: none;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      transition: color 0.2s;
+    }
+    .header .back-link:hover { color: var(--sage); }
+    .header .back-link::before { content: "← "; }
+    .header h1 {
+      font-family: "Great Vibes", cursive;
+      font-size: clamp(2.5rem, 8vw, 3.5rem);
+      color: var(--ink);
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 8px rgba(255, 250, 244, 0.6);
+    }
+    .header .subtitle {
+      font-size: clamp(1.1rem, 3vw, 1.3rem);
+      color: var(--sage-soft);
+      font-style: italic;
+    }
+
+    .intro {
+      background: rgba(255, 250, 244, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(212, 166, 69, 0.32);
+      border-radius: 14px;
+      padding: 1.5rem 1.5rem 1.6rem;
+      text-align: center;
+      margin-bottom: 2rem;
+      animation: fadeUp 0.8s 0.1s ease both;
+    }
+    .intro p {
+      font-size: 1.15rem;
+      line-height: 1.7;
+      color: var(--ink);
+    }
+
+    .toc {
+      background: rgba(255, 250, 244, 0.75);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(212, 166, 69, 0.28);
+      border-radius: 12px;
+      padding: 1.2rem 1.3rem;
+      margin-bottom: 2rem;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+    .toc h2 {
+      font-size: 0.8rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--sage);
+      font-weight: 700;
+      margin-bottom: 0.8rem;
+      text-align: center;
+    }
+    .toc ul {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.5rem;
+    }
+    .toc a {
+      display: block;
+      color: var(--sage-soft);
+      text-decoration: none;
+      font-size: 1.05rem;
+      padding: 0.4rem 0.5rem;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .toc a:hover {
+      background: rgba(212, 166, 69, 0.12);
+      color: var(--sage);
+    }
+
+    .section {
+      background: rgba(255, 250, 244, 0.82);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(212, 166, 69, 0.32);
+      border-radius: 14px;
+      padding: 1.8rem 1.5rem 2rem;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.8s ease both;
+    }
+    .section h2 {
+      font-size: 0.75rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--sage);
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+    .section h3 {
+      font-size: clamp(1.55rem, 4vw, 1.85rem);
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 1rem;
+      line-height: 1.3;
+    }
+    .section h4 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--gold-deep);
+      margin-top: 1.5rem;
+      margin-bottom: 0.7rem;
+    }
+    .section p {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      line-height: 1.65;
+    }
+    .section ul {
+      margin: 0.8rem 0 1.2rem 1.5rem;
+      font-size: 1.1rem;
+    }
+    .section li {
+      margin-bottom: 0.6rem;
+      line-height: 1.6;
+    }
+    .section strong { font-weight: 600; color: var(--ink); }
+    .section em { color: var(--sage-soft); }
+
+    .highlight {
+      background: linear-gradient(135deg, rgba(212, 166, 69, 0.08) 0%, rgba(77, 153, 112, 0.06) 100%);
+      border-left: 3px solid var(--gold);
+      padding: 1rem 1.2rem;
+      margin: 1.2rem 0;
+      border-radius: 6px;
+    }
+    .highlight p { margin-bottom: 0.5rem; }
+    .highlight p:last-child { margin-bottom: 0; }
+
+    .divider {
+      width: 64px;
+      height: 1px;
+      margin: 1.5rem auto;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    footer {
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(212, 166, 69, 0.25);
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--sage-soft);
+    }
+    footer a {
+      color: var(--sage-soft);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+    footer a:hover { border-color: var(--sage-soft); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <a href="index.html" class="back-link">Back to invitation</a>
+      <h1>Travel &amp; Activities</h1>
+      <p class="subtitle">Your family guide to Da Nang</p>
+    </header>
+
+    <div class="intro">
+      <p>
+        We're thrilled you'll be joining us in Da Nang this December! Whether you're arriving early 
+        or staying through the holidays, this guide will help your family make the most of your visit 
+        to Vietnam's beautiful central coast.
+      </p>
+    </div>
+
+    <nav class="toc">
+      <h2>Quick Links</h2>
+      <ul>
+        <li><a href="#practical">Getting There & Around</a></li>
+        <li><a href="#weather">Weather & Packing</a></li>
+        <li><a href="#beaches">Beaches & Water</a></li>
+        <li><a href="#culture">Cultural Sites</a></li>
+        <li><a href="#hoian">Day Trip to Hoi An</a></li>
+        <li><a href="#food">Dining & Markets</a></li>
+      </ul>
+    </nav>
+
+    <section class="section" id="practical">
+      <h2>Essentials</h2>
+      <h3>Getting There & Around</h3>
+      
+      <h4>Da Nang International Airport (DAD)</h4>
+      <p>
+        Da Nang Airport is Vietnam's third-largest international hub, with direct flights from major 
+        Asian cities. The airport is about 5 km from downtown and 7 km from My Khe Beach (where Furama Resort is located).
+      </p>
+      
+      <ul>
+        <li><strong>Airport transfers:</strong> Taxis and ride-hailing apps (Grab, Gojek) are readily available. Expect 10–15 minutes to the beach area.</li>
+        <li><strong>Visa requirements:</strong> Check Vietnam visa rules for your nationality. Many visitors can enter visa-free for short stays or obtain e-visas online.</li>
+      </ul>
+
+      <h4>Getting Around Da Nang</h4>
+      <ul>
+        <li><strong>Grab & Gojek:</strong> These ride-hailing apps work like Uber and are the easiest way to get around with kids. Drivers are plentiful and fares are affordable.</li>
+        <li><strong>Taxis:</strong> Metered taxis are widely available. Look for Mai Linh and Vinasun, two reputable companies.</li>
+        <li><strong>Hotel shuttles:</strong> Many resorts, including Furama, offer shuttle services to nearby attractions.</li>
+        <li><strong>Walking:</strong> The My Khe Beach strip is pedestrian-friendly, with a scenic beachfront promenade perfect for morning or evening strolls.</li>
+      </ul>
+
+      <div class="highlight">
+        <p><strong>Pro tip for families:</strong> Download the Grab app before you arrive and set up payment. It's the most reliable and transparent way to travel with children and luggage.</p>
+      </div>
+    </section>
+
+    <section class="section" id="weather">
+      <h2>Plan Ahead</h2>
+      <h3>Weather & What to Pack</h3>
+      
+      <p>
+        Late December is one of the best times to visit Da Nang! The weather is warm and mostly dry, 
+        perfect for families exploring the coast.
+      </p>
+      
+      <h4>What to Expect</h4>
+      <ul>
+        <li><strong>Temperature:</strong> Daytime highs around 24–28°C (75–82°F), cooling to 20–22°C (68–72°F) in the evenings.</li>
+        <li><strong>Conditions:</strong> Generally sunny with occasional light showers. The sea is usually calm and swimmable.</li>
+        <li><strong>Humidity:</strong> Moderate and comfortable compared to Vietnam's summer months.</li>
+      </ul>
+
+      <h4>Packing Essentials</h4>
+      <ul>
+        <li>Lightweight summer clothes (shorts, dresses, breathable fabrics)</li>
+        <li>Light sweater or jacket for air-conditioned spaces and cooler evenings</li>
+        <li>Swimwear and sun protection (hats, sunglasses, reef-safe sunscreen)</li>
+        <li>Comfortable walking shoes for exploring temples and markets</li>
+        <li>Light rain jacket or travel umbrella (just in case)</li>
+      </ul>
+
+      <div class="highlight">
+        <p><strong>For the wedding:</strong> The ceremony is outdoors at 4:00 PM. Expect warm sunshine transitioning to a comfortable evening. Resort elegant attire is recommended.</p>
+      </div>
+    </section>
+
+    <section class="section" id="beaches">
+      <h2>Sun & Sand</h2>
+      <h3>Beaches & Water Activities</h3>
+      
+      <h4>My Khe Beach</h4>
+      <p>
+        Named by Forbes as one of the most beautiful beaches on the planet, My Khe stretches right 
+        along the resort area. It's wide, clean, and perfect for families.
+      </p>
+      <ul>
+        <li><strong>Swimming:</strong> Gentle waves and lifeguards on duty during the day. Ideal for children.</li>
+        <li><strong>Beach time:</strong> Sunrise and late afternoon are magical times to visit when the light is golden and the sand is cooler.</li>
+        <li><strong>Amenities:</strong> Loungers, umbrellas, beach cafés, and fresh coconut vendors.</li>
+      </ul>
+
+      <h4>Furama Resort Pools & Beach</h4>
+      <p>
+        Our wedding venue has direct beach access plus beautiful pools. Perfect for families who want 
+        a relaxing day without traveling.
+      </p>
+
+      <h4>Non Nuoc Beach</h4>
+      <p>
+        Just south of My Khe, this quieter stretch is equally beautiful and less crowded. Great if you're 
+        looking for a more peaceful beach day.
+      </p>
+
+      <div class="highlight">
+        <p><strong>Safety note:</strong> Always swim in designated areas with lifeguard coverage. The sea is generally calm in late December, but respect any warning flags.</p>
+      </div>
+    </section>
+
+    <section class="section" id="culture">
+      <h2>Explore</h2>
+      <h3>Cultural Sites & Family Attractions</h3>
+      
+      <h4>Marble Mountains (Ngũ Hành Sơn)</h4>
+      <p>
+        <em>15 minutes from Furama · Half-day visit</em>
+      </p>
+      <p>
+        Five limestone hills dotted with Buddhist caves, temples, and spectacular viewpoints. Kids will 
+        love exploring the caves and climbing to the summit for panoramic views of the coast.
+      </p>
+      <ul>
+        <li><strong>Family tip:</strong> There's an elevator to reduce climbing for young children and grandparents.</li>
+        <li><strong>What to see:</strong> Huyen Khong Cave (the most impressive), Linh Ung Pagoda, stone carving workshops at the base.</li>
+        <li><strong>Timing:</strong> Go early morning (7–9 AM) to avoid the midday heat.</li>
+      </ul>
+
+      <h4>Linh Ung Pagoda & Son Tra Peninsula</h4>
+      <p>
+        <em>20 minutes from Furama · Half-day trip</em>
+      </p>
+      <p>
+        Home to the towering 67-meter Lady Buddha statue overlooking the sea, this peaceful peninsula 
+        offers stunning coastal drives and hiking trails through tropical forest.
+      </p>
+      <ul>
+        <li><strong>Great for:</strong> Multi-generational visits — scenic views without strenuous activity.</li>
+        <li><strong>Wildlife:</strong> Keep an eye out for rare red-shanked douc langurs in the forest!</li>
+      </ul>
+
+      <h4>Ba Na Hills & Golden Bridge</h4>
+      <p>
+        <em>1 hour from Da Nang · Full-day trip</em>
+      </p>
+      <p>
+        The iconic Golden Bridge held by giant stone hands is one of Vietnam's most photographed landmarks. 
+        Ba Na Hills is a French colonial-era hill station turned theme park, reached by one of the world's 
+        longest cable car rides.
+      </p>
+      <ul>
+        <li><strong>Perfect for:</strong> Older kids and teens who enjoy theme parks, gardens, and unique photo ops.</li>
+        <li><strong>Note for families:</strong> It's a long day with lots of walking. The cable car ride is spectacular but may not suit very young children or those uncomfortable with heights.</li>
+        <li><strong>Weather:</strong> Much cooler at altitude (bring layers), and it can be foggy even when Da Nang is sunny.</li>
+      </ul>
+
+      <h4>Dragon Bridge (Cầu Rồng)</h4>
+      <p>
+        <em>Downtown Da Nang · Evening visit</em>
+      </p>
+      <p>
+        This stunning dragon-shaped bridge lights up nightly and breathes fire and water on weekend evenings 
+        (Saturday and Sunday at 9:00 PM). Free to watch and kids love it!
+      </p>
+    </section>
+
+    <section class="section" id="hoian">
+      <h2>Day Trip</h2>
+      <h3>Hoi An Ancient Town</h3>
+      <p>
+        <em>35 minutes south of Da Nang · Full-day or evening visit</em>
+      </p>
+      
+      <p>
+        A UNESCO World Heritage Site, Hoi An is a beautifully preserved trading port with lantern-lit streets, 
+        riverside cafés, and family-friendly tailors, markets, and workshops.
+      </p>
+
+      <h4>What to Do</h4>
+      <ul>
+        <li><strong>Old Town stroll:</strong> Wander the pedestrian streets, cross the Japanese Covered Bridge, and admire the colorful lanterns.</li>
+        <li><strong>Lantern-making:</strong> Many shops offer hands-on workshops where kids can make their own silk lanterns.</li>
+        <li><strong>Boat rides:</strong> Rent a paddleboat or take a sunset cruise on the Thu Bon River.</li>
+        <li><strong>An Bang Beach:</strong> A quick bike ride or taxi from Hoi An's center — a beautiful, laid-back beach perfect for families.</li>
+        <li><strong>Shopping:</strong> Custom-made clothes and shoes can be tailored in 24 hours (great souvenirs for the whole family!).</li>
+      </ul>
+
+      <h4>Best Time to Visit</h4>
+      <p>
+        Late afternoon through evening is magical when thousands of lanterns illuminate the town. The Old Town 
+        is pedestrian-only and very stroller-friendly.
+      </p>
+
+      <div class="highlight">
+        <p><strong>Getting there:</strong> Grab/taxi is easy and affordable (~30 minutes). Many hotels also offer Hoi An shuttle services.</p>
+      </div>
+    </section>
+
+    <section class="section" id="food">
+      <h2>Eat & Explore</h2>
+      <h3>Dining & Local Markets</h3>
+      
+      <h4>Family-Friendly Dining</h4>
+      <p>
+        Vietnamese cuisine is flavorful, fresh, and generally very kid-friendly. Don't miss these local favorites:
+      </p>
+      <ul>
+        <li><strong>Pho:</strong> Vietnam's famous noodle soup — mild, comforting, and available everywhere.</li>
+        <li><strong>Banh mi:</strong> Crispy baguette sandwiches with savory fillings.</li>
+        <li><strong>Fresh spring rolls:</strong> Light, healthy, and fun for kids to help assemble.</li>
+        <li><strong>Seafood:</strong> Da Nang's coastal location means incredibly fresh fish, prawns, and crab.</li>
+        <li><strong>Tropical fruit:</strong> Mango, dragon fruit, rambutan — visit morning markets for the freshest selections.</li>
+      </ul>
+
+      <h4>Con Market (Chợ Cồn)</h4>
+      <p>
+        <em>Downtown Da Nang</em>
+      </p>
+      <p>
+        A bustling local market perfect for experiencing everyday Vietnamese life. Great for breakfast 
+        (bánh mì, fresh fruit smoothies) and souvenir shopping. Go in the morning when it's most lively.
+      </p>
+
+      <h4>Han Market (Chợ Hàn)</h4>
+      <p>
+        <em>Central Da Nang</em>
+      </p>
+      <p>
+        A larger covered market with everything from spices and snacks to clothes and handicrafts. The surrounding 
+        streets have excellent street food stalls.
+      </p>
+
+      <div class="highlight">
+        <p><strong>Food safety for families:</strong> Stick to busy stalls with high turnover, drink bottled water, and your resort can recommend trusted local restaurants. Most hotels and resorts also have kids' menus with familiar options.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>More Ideas</h2>
+      <h3>Easy Resort & Relaxation Days</h3>
+      
+      <p>
+        With the wedding and holiday travel, your family may want some low-key days. Here are great options 
+        that don't require leaving the resort area:
+      </p>
+      <ul>
+        <li><strong>Pool days:</strong> Many Da Nang resorts have kids' pools, waterslides, and swim-up bars for parents.</li>
+        <li><strong>Spa time:</strong> Treat yourself to a massage while kids are in supervised activities or with family.</li>
+        <li><strong>Beach sunrise or sunset:</strong> My Khe Beach is magical at golden hour and just steps away.</li>
+        <li><strong>Resort activities:</strong> Check with your hotel for cooking classes, beach volleyball, or cultural performances.</li>
+        <li><strong>Beachfront dining:</strong> Many restaurants along the beach strip offer fresh seafood with ocean views.</li>
+      </ul>
+
+      <div class="divider"></div>
+
+      <h3>A Few More Tips</h3>
+      <ul>
+        <li><strong>Language:</strong> English is widely spoken in tourist areas, hotels, and restaurants. Learning a few Vietnamese phrases (xin chào = hello, cảm ơn = thank you) is appreciated!</li>
+        <li><strong>Currency:</strong> Vietnamese Dong (VND). ATMs are plentiful, and many places accept credit cards. US dollars are sometimes accepted but dong gives better value.</li>
+        <li><strong>Dress code:</strong> Casual and comfortable. When visiting temples, cover shoulders and knees out of respect.</li>
+        <li><strong>Tipping:</strong> Not obligatory but appreciated (5–10% at restaurants, small amounts for hotel staff).</li>
+      </ul>
+    </section>
+
+    <div class="divider"></div>
+
+    <footer>
+      <p>Questions or need recommendations? Feel free to ask — we're happy to help!</p>
+      <p style="margin-top: 0.5rem;"><a href="index.html">← Back to invitation</a></p>
+    </footer>
+  </main>
+</body>
+</html>
