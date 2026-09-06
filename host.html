@@ -181,6 +181,55 @@
       margin-bottom: 0.65rem;
     }
     .guest-card .link:hover { text-decoration: underline; }
+    .guest-card .rsvp-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+      flex-wrap: wrap;
+    }
+    .guest-card .rsvp-label {
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--sage-soft);
+    }
+    .guest-card select {
+      padding: 0.35rem 0.65rem;
+      border: 1px solid rgba(184, 149, 74, 0.35);
+      border-radius: 8px;
+      background: var(--sand);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .guest-card select:focus {
+      border-color: var(--gold);
+    }
+    .rsvp-badge {
+      display: inline-block;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .rsvp-badge.attending {
+      background: rgba(45, 122, 82, 0.15);
+      color: var(--sage);
+    }
+    .rsvp-badge.pending {
+      background: rgba(184, 149, 74, 0.15);
+      color: var(--gold-deep);
+    }
+    .rsvp-badge.declined {
+      background: rgba(138, 160, 140, 0.15);
+      color: var(--sage-soft);
+    }
     .guest-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; }
     .empty {
       text-align: center;
@@ -257,6 +306,24 @@
         <button type="button" class="btn btn-ghost btn-sm" id="logoutBtn">Log out</button>
       </div>
 
+      <div class="panel" style="margin-bottom: 1.25rem;">
+        <h2>Attendance Summary</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; text-align: center;">
+          <div>
+            <div style="font-size: 2rem; font-weight: 600; color: var(--sage);" id="count-attending">0</div>
+            <div style="font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sage-soft); margin-top: 0.25rem;">Attending</div>
+          </div>
+          <div>
+            <div style="font-size: 2rem; font-weight: 600; color: var(--gold-deep);" id="count-pending">0</div>
+            <div style="font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sage-soft); margin-top: 0.25rem;">Pending</div>
+          </div>
+          <div>
+            <div style="font-size: 2rem; font-weight: 600; color: var(--sage-soft);" id="count-declined">0</div>
+            <div style="font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sage-soft); margin-top: 0.25rem;">Declined</div>
+          </div>
+        </div>
+      </div>
+
       <div class="panel">
         <h2>Add guest</h2>
         <form id="addForm" class="add-row">
@@ -300,7 +367,7 @@
       var toastEl = document.getElementById("toast");
       var toastTimer = null;
 
-      var guests = [];
+      var guests = []; // Array of {name: string, rsvp: "pending"|"yes"|"no"}
 
       function toHex(buffer) {
         var bytes = new Uint8Array(buffer);
@@ -333,8 +400,12 @@
         return location.origin + path;
       }
 
-      function guestUrl(name) {
-        return inviteBase() + "?to=" + encodeURIComponent(name);
+      function guestUrl(guest) {
+        var url = inviteBase() + "?to=" + encodeURIComponent(guest.name);
+        if (guest.rsvp && guest.rsvp !== "pending") {
+          url += "&rsvp=" + guest.rsvp;
+        }
+        return url;
       }
 
       function loadLocalGuests() {
@@ -343,9 +414,19 @@
           if (!raw) return [];
           var parsed = JSON.parse(raw);
           if (!Array.isArray(parsed)) return [];
-          return parsed
-            .map(function (n) { return String(n || "").trim(); })
-            .filter(Boolean);
+          
+          // Migrate old format (array of strings) to new format (array of objects)
+          return parsed.map(function (item) {
+            if (typeof item === "string") {
+              return { name: item.trim(), rsvp: "pending" };
+            } else if (item && typeof item === "object" && item.name) {
+              return {
+                name: String(item.name).trim(),
+                rsvp: item.rsvp || "pending"
+              };
+            }
+            return null;
+          }).filter(function (g) { return g && g.name; });
         } catch (e) {
           return [];
         }
@@ -357,14 +438,14 @@
 
       function mergeNames(list) {
         var seen = {};
-        guests.forEach(function (n) { seen[n.toLowerCase()] = true; });
+        guests.forEach(function (g) { seen[g.name.toLowerCase()] = true; });
         list.forEach(function (n) {
           var name = String(n || "").trim();
           if (!name) return;
           var key = name.toLowerCase();
           if (seen[key]) return;
           seen[key] = true;
-          guests.push(name);
+          guests.push({ name: name, rsvp: "pending" });
         });
         saveGuests();
         renderGuests();
@@ -393,17 +474,50 @@
         }, 1600);
       }
 
+      function updateSummary() {
+        var counts = { yes: 0, pending: 0, no: 0 };
+        guests.forEach(function (g) {
+          counts[g.rsvp] = (counts[g.rsvp] || 0) + 1;
+        });
+        document.getElementById("count-attending").textContent = counts.yes;
+        document.getElementById("count-pending").textContent = counts.pending;
+        document.getElementById("count-declined").textContent = counts.no;
+      }
+
       function renderGuests() {
         guestListEl.innerHTML = "";
         emptyState.hidden = guests.length > 0;
-        guests.forEach(function (name, index) {
-          var url = guestUrl(name);
+        updateSummary();
+        
+        guests.forEach(function (guest, index) {
+          var url = guestUrl(guest);
           var li = document.createElement("li");
           li.className = "guest-card";
 
           var nameEl = document.createElement("div");
           nameEl.className = "name";
-          nameEl.textContent = name;
+          nameEl.textContent = guest.name;
+
+          var rsvpRow = document.createElement("div");
+          rsvpRow.className = "rsvp-row";
+          
+          var rsvpLabel = document.createElement("span");
+          rsvpLabel.className = "rsvp-label";
+          rsvpLabel.textContent = "Status:";
+          
+          var rsvpSelect = document.createElement("select");
+          rsvpSelect.innerHTML = '<option value="pending">Pending</option>' +
+                                 '<option value="yes">Attending</option>' +
+                                 '<option value="no">Declined</option>';
+          rsvpSelect.value = guest.rsvp;
+          rsvpSelect.addEventListener("change", function () {
+            guests[index].rsvp = rsvpSelect.value;
+            saveGuests();
+            renderGuests();
+          });
+          
+          rsvpRow.appendChild(rsvpLabel);
+          rsvpRow.appendChild(rsvpSelect);
 
           var linkEl = document.createElement("a");
           linkEl.className = "link";
@@ -444,6 +558,7 @@
           actions.appendChild(copyBtn);
           actions.appendChild(delBtn);
           li.appendChild(nameEl);
+          li.appendChild(rsvpRow);
           li.appendChild(linkEl);
           li.appendChild(actions);
           guestListEl.appendChild(li);
@@ -515,10 +630,10 @@
         var name = guestNameInput.value.trim();
         if (!name) return;
         var exists = guests.some(function (g) {
-          return g.toLowerCase() === name.toLowerCase();
+          return g.name.toLowerCase() === name.toLowerCase();
         });
         if (!exists) {
-          guests.push(name);
+          guests.push({ name: name, rsvp: "pending" });
           saveGuests();
           renderGuests();
         }
