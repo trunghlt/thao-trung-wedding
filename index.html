@@ -523,6 +523,18 @@
         } else {
           rsvpMessage.textContent = "Thank you for letting us know. You'll be missed!";
         }
+
+        // Post RSVP to Airtable webhook
+        if (guest) {
+          var airtableRsvp = response === "yes" ? "Attending" : "Declined";
+          fetch("https://hooks.airtable.com/workflows/v1/genericWebhook/appLMVQJ3ab9TqepP/wflMWgnLxZvm7Ey2G/wtrkS4pFkH2VtYW5V", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: guest, rsvp: airtableRsvp })
+          }).catch(function() {
+            // Silently fail - webhook is optional
+          });
+        }
       }
 
       if (rsvpStatus === "yes" || rsvpStatus === "no") {
