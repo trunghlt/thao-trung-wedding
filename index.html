@@ -451,6 +451,23 @@
       </article>
 
       <article class="panel span-2">
+        <h2>Please Confirm Your Attendance</h2>
+        <div id="rsvp-prompt">
+          <p class="big">Will you be joining us?</p>
+          <p class="muted">Kindly respond by October 31, 2026</p>
+          <div class="divider" aria-hidden="true"></div>
+          <div class="actions">
+            <button class="btn primary" id="rsvp-yes">Yes, I'll be there</button>
+            <button class="btn" id="rsvp-no">Unable to attend</button>
+          </div>
+        </div>
+        <div id="rsvp-confirmed" style="display: none;">
+          <p class="big" id="rsvp-message"></p>
+          <p class="muted" style="margin-top: 0.75rem;">Your response has been recorded.<br>Please share your updated invite link with your host.</p>
+        </div>
+      </article>
+
+      <article class="panel span-2">
         <h2>Travel &amp; Activities</h2>
         <p class="big">Explore Da Nang with Family</p>
         <p class="muted">Things to do around the wedding dates</p>
@@ -471,6 +488,7 @@
     (function () {
       var params = new URLSearchParams(window.location.search);
       var guest = (params.get("to") || params.get("guest") || "").trim();
+      var rsvpStatus = params.get("rsvp");
       var hello = document.getElementById("guest-hello");
       if (guest) {
         try { guest = decodeURIComponent(guest); } catch (e) {}
@@ -483,6 +501,47 @@
           if (desc) desc.setAttribute("content", "Dear " + guest + " — you're invited to the wedding of Thao & Trung, 26 December 2026 at Furama Resort, Da Nang.");
         }
       }
+
+      // RSVP handling
+      var rsvpPrompt = document.getElementById("rsvp-prompt");
+      var rsvpConfirmed = document.getElementById("rsvp-confirmed");
+      var rsvpMessage = document.getElementById("rsvp-message");
+      var rsvpYesBtn = document.getElementById("rsvp-yes");
+      var rsvpNoBtn = document.getElementById("rsvp-no");
+
+      function updateRsvp(response) {
+        var newParams = new URLSearchParams(window.location.search);
+        newParams.set("rsvp", response);
+        var newUrl = window.location.pathname + "?" + newParams.toString();
+        window.history.replaceState({}, "", newUrl);
+        
+        rsvpPrompt.style.display = "none";
+        rsvpConfirmed.style.display = "block";
+        
+        if (response === "yes") {
+          rsvpMessage.textContent = "Thank you! We're delighted you'll be joining us.";
+        } else {
+          rsvpMessage.textContent = "Thank you for letting us know. You'll be missed!";
+        }
+      }
+
+      if (rsvpStatus === "yes" || rsvpStatus === "no") {
+        rsvpPrompt.style.display = "none";
+        rsvpConfirmed.style.display = "block";
+        if (rsvpStatus === "yes") {
+          rsvpMessage.textContent = "Thank you! We're delighted you'll be joining us.";
+        } else {
+          rsvpMessage.textContent = "Thank you for letting us know. You'll be missed!";
+        }
+      }
+
+      rsvpYesBtn.addEventListener("click", function () {
+        updateRsvp("yes");
+      });
+
+      rsvpNoBtn.addEventListener("click", function () {
+        updateRsvp("no");
+      });
 
       // ICS calendar download (local afternoon Da Nang = ICT, UTC+7)
       // 16:00 ICT = 09:00 UTC on 2026-12-26; end assume 3 hours
