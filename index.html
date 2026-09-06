@@ -48,13 +48,13 @@
 
     .guest-hello {
       display: none;
-      font-size: clamp(1.35rem, 4.5vw, 1.75rem);
+      font-size: clamp(1.05rem, 3vw, 1.2rem);
       font-style: italic;
-      color: var(--gold-deep);
-      margin-bottom: 0.85rem;
+      color: var(--sage-soft);
+      margin-bottom: 0.95rem;
       text-align: center;
-      font-weight: 500;
-      text-shadow: 0 1px 3px rgba(255, 255, 255, 0.5);
+      font-weight: 400;
+      letter-spacing: 0.01em;
     }
     .guest-hello.is-on { display: block; }
 
@@ -380,12 +380,11 @@
 </head>
 <body>
   <main class="page">
-    <p class="guest-hello" id="guest-hello"></p>
-
     <div class="card-stage">
       <div class="petal-field" aria-hidden="true" id="petal-field"></div>
       <article class="invite" aria-label="Wedding invitation">
         <div class="invite-text">
+          <p class="guest-hello" id="guest-hello"></p>
           <p class="together">Together with their families</p>
           <h1 class="names">Thao <span class="amp">&amp;</span> Trung</h1>
           <p class="pleasure">request the pleasure of your company</p>
@@ -450,16 +449,6 @@
           >Open map</a>
         </div>
       </article>
-
-      <article class="panel span-2">
-        <h2>Share</h2>
-        <p class="muted" style="margin-bottom: 0.85rem;" id="share-hint">Send this personalized invite</p>
-        <div class="actions">
-          <button type="button" class="btn primary" id="copy-link">Copy link</button>
-          <a class="btn" id="share-native" href="#" hidden>Share…</a>
-        </div>
-        <p class="muted" id="copy-status" style="margin-top: 0.75rem; min-height: 1.2em;" aria-live="polite"></p>
-      </article>
     </section>
 
     <p class="note">We can't wait to celebrate with you.</p>
@@ -518,30 +507,6 @@
         a.remove();
         URL.revokeObjectURL(url);
       });
-
-      var statusEl = document.getElementById("copy-status");
-      var copyBtn = document.getElementById("copy-link");
-      copyBtn.addEventListener("click", async function () {
-        try {
-          await navigator.clipboard.writeText(window.location.href);
-          statusEl.textContent = "Link copied.";
-        } catch (err) {
-          statusEl.textContent = "Copy this URL from your browser address bar.";
-        }
-      });
-
-      var shareBtn = document.getElementById("share-native");
-      if (navigator.share) {
-        shareBtn.hidden = false;
-        shareBtn.addEventListener("click", function (e) {
-          e.preventDefault();
-          navigator.share({
-            title: "Thao & Trung — Wedding Invitation",
-            text: "You're invited — 26 December 2026 · 4:00 PM · Furama Resort, Da Nang",
-            url: window.location.href
-          }).catch(function () {});
-        });
-      }
 
       // Scenery video: reduced-motion / playback fallback
       var scenery = document.getElementById("scenery");
