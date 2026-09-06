@@ -297,13 +297,38 @@
     </section>
 
     <section id="managerView" hidden>
+      <div id="airtableSetup" class="panel" style="margin-bottom: 1.25rem;" hidden>
+        <h2>Airtable Setup Required</h2>
+        <p style="margin-bottom: 1rem; font-size: 1.05rem;">To manage guests in Airtable, provide a Personal Access Token with <code>data.records:read</code> and <code>data.records:write</code> permissions for this base.</p>
+        <p style="margin-bottom: 0.75rem; font-size: 0.95rem; color: var(--sage-soft);">
+          <strong>How to create a PAT:</strong><br>
+          1. Visit <a href="https://airtable.com/create/tokens" target="_blank" rel="noopener" style="color: var(--gold-deep);">airtable.com/create/tokens</a><br>
+          2. Create a token with scopes: <code>data.records:read</code>, <code>data.records:write</code><br>
+          3. Add access to base: <strong>Thao & Trung Wedding</strong> (<code>appLMVQJ3ab9TqepP</code>)<br>
+          4. Copy the token and paste it below
+        </p>
+        <div style="display: flex; gap: 0.65rem; align-items: stretch; flex-wrap: wrap; margin-bottom: 0.75rem;">
+          <input id="tokenInput" type="password" placeholder="pat..." style="flex: 1 1 300px;" />
+          <button class="btn" id="saveTokenBtn" type="button">Save Token</button>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--sage-soft); font-style: italic;">Token is stored only in your browser and never committed to code.</p>
+        <p id="tokenError" class="err" role="alert">Failed to connect to Airtable. Check your token and permissions.</p>
+        <div style="text-align: center; margin-top: 1rem;">
+          <button class="btn btn-ghost btn-sm" id="useLocalStorageBtn" type="button">Continue with Local Storage (no sync)</button>
+        </div>
+      </div>
+
       <div class="topbar">
         <div>
           <p class="eyebrow">Host tools</p>
           <h1>Guest links</h1>
-          <p class="sub">Add guests and copy their personalized invites</p>
+          <p class="sub" id="dataSourceLabel">Add guests and copy their personalized invites</p>
         </div>
-        <button type="button" class="btn btn-ghost btn-sm" id="logoutBtn">Log out</button>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <a href="#" id="openAirtableBtn" class="btn btn-ghost btn-sm" target="_blank" rel="noopener" hidden>Open Airtable</a>
+          <button type="button" class="btn btn-ghost btn-sm" id="switchStorageBtn" hidden>Switch Storage</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="logoutBtn">Log out</button>
+        </div>
       </div>
 
       <div class="panel" style="margin-bottom: 1.25rem;">
@@ -354,6 +379,12 @@
 
       var SESSION_KEY = "weddingHostSession";
       var GUESTS_KEY = "weddingGuests";
+      var AIRTABLE_TOKEN_KEY = "airtableToken";
+      
+      var AIRTABLE_BASE_ID = "appLMVQJ3ab9TqepP";
+      var AIRTABLE_TABLE_ID = "tbltPC5SXfia5V0Gg";
+      var AIRTABLE_API_URL = "https://api.airtable.com/v0/" + AIRTABLE_BASE_ID + "/" + AIRTABLE_TABLE_ID;
+      var AIRTABLE_INTERFACE_URL = "https://airtable.com/appLMVQJ3ab9TqepP/pagpcENDRTWbI7HyV";
 
       var loginView = document.getElementById("loginView");
       var managerView = document.getElementById("managerView");
@@ -367,7 +398,9 @@
       var toastEl = document.getElementById("toast");
       var toastTimer = null;
 
-      var guests = []; // Array of {name: string, rsvp: "pending"|"yes"|"no"}
+      var guests = []; // Array of {id: string, name: string, rsvp: "pending"|"yes"|"no"}
+      var airtableToken = null;
+      var useAirtable = false;
 
       function toHex(buffer) {
         var bytes = new Uint8Array(buffer);
@@ -408,6 +441,126 @@
         return url;
       }
 
+      function getAirtableToken() {
+        return localStorage.getItem(AIRTABLE_TOKEN_KEY);
+      }
+
+      function setAirtableToken(token) {
+        localStorage.setItem(AIRTABLE_TOKEN_KEY, token);
+        airtableToken = token;
+      }
+
+      function clearAirtableToken() {
+        localStorage.removeItem(AIRTABLE_TOKEN_KEY);
+        airtableToken = null;
+      }
+
+      async function fetchAirtableGuests() {
+        if (!airtableToken) return [];
+        try {
+          var allRecords = [];
+          var offset = null;
+          do {
+            var url = AIRTABLE_API_URL;
+            if (offset) url += "?offset=" + encodeURIComponent(offset);
+            var res = await fetch(url, {
+              headers: { "Authorization": "Bearer " + airtableToken }
+            });
+            if (!res.ok) throw new Error("Failed to fetch: " + res.status);
+            var data = await res.json();
+            allRecords = allRecords.concat(data.records || []);
+            offset = data.offset;
+          } while (offset);
+          
+          return allRecords.map(function (record) {
+            var fields = record.fields || {};
+            var rsvpField = fields.RSVP || fields.rsvp || "Pending";
+            var rsvpNormalized = rsvpField === "Attending" ? "yes" : 
+                                 rsvpField === "Declined" ? "no" : "pending";
+            return {
+              id: record.id,
+              name: fields.Name || "",
+              rsvp: rsvpNormalized
+            };
+          }).filter(function (g) { return g.name; });
+        } catch (e) {
+          console.error("Airtable fetch error:", e);
+          throw e;
+        }
+      }
+
+      async function createAirtableGuest(name) {
+        if (!airtableToken) return null;
+        try {
+          var res = await fetch(AIRTABLE_API_URL, {
+            method: "POST",
+            headers: {
+              "Authorization": "Bearer " + airtableToken,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              records: [{
+                fields: {
+                  Name: name,
+                  RSVP: "Pending"
+                }
+              }]
+            })
+          });
+          if (!res.ok) throw new Error("Failed to create: " + res.status);
+          var data = await res.json();
+          var record = data.records && data.records[0];
+          if (!record) throw new Error("No record returned");
+          return {
+            id: record.id,
+            name: record.fields.Name || name,
+            rsvp: "pending"
+          };
+        } catch (e) {
+          console.error("Airtable create error:", e);
+          throw e;
+        }
+      }
+
+      async function updateAirtableGuest(id, rsvp) {
+        if (!airtableToken) return;
+        try {
+          var airtableRsvp = rsvp === "yes" ? "Attending" : 
+                             rsvp === "no" ? "Declined" : "Pending";
+          var res = await fetch(AIRTABLE_API_URL, {
+            method: "PATCH",
+            headers: {
+              "Authorization": "Bearer " + airtableToken,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              records: [{
+                id: id,
+                fields: { RSVP: airtableRsvp }
+              }]
+            })
+          });
+          if (!res.ok) throw new Error("Failed to update: " + res.status);
+        } catch (e) {
+          console.error("Airtable update error:", e);
+          throw e;
+        }
+      }
+
+      async function deleteAirtableGuest(id) {
+        if (!airtableToken) return;
+        try {
+          var res = await fetch(AIRTABLE_API_URL + "?records[]=" + id, {
+            method: "DELETE",
+            headers: { "Authorization": "Bearer " + airtableToken }
+          });
+          if (!res.ok) throw new Error("Failed to delete: " + res.status);
+        } catch (e) {
+          console.error("Airtable delete error:", e);
+          throw e;
+        }
+      }
+
       function loadLocalGuests() {
         try {
           var raw = localStorage.getItem(GUESTS_KEY);
@@ -415,12 +568,12 @@
           var parsed = JSON.parse(raw);
           if (!Array.isArray(parsed)) return [];
           
-          // Migrate old format (array of strings) to new format (array of objects)
           return parsed.map(function (item) {
             if (typeof item === "string") {
-              return { name: item.trim(), rsvp: "pending" };
+              return { id: null, name: item.trim(), rsvp: "pending" };
             } else if (item && typeof item === "object" && item.name) {
               return {
+                id: item.id || null,
                 name: String(item.name).trim(),
                 rsvp: item.rsvp || "pending"
               };
@@ -432,36 +585,71 @@
         }
       }
 
-      function saveGuests() {
+      function saveLocalGuests() {
         localStorage.setItem(GUESTS_KEY, JSON.stringify(guests));
       }
 
-      function mergeNames(list) {
-        var seen = {};
-        guests.forEach(function (g) { seen[g.name.toLowerCase()] = true; });
-        list.forEach(function (n) {
-          var name = String(n || "").trim();
-          if (!name) return;
-          var key = name.toLowerCase();
-          if (seen[key]) return;
-          seen[key] = true;
-          guests.push({ name: name, rsvp: "pending" });
-        });
-        saveGuests();
-        renderGuests();
+      async function loadGuests() {
+        if (useAirtable) {
+          guests = await fetchAirtableGuests();
+        } else {
+          guests = loadLocalGuests();
+        }
       }
 
-      async function tryFetchGuestsJson() {
-        try {
-          var res = await fetch("guests.json", { cache: "no-store" });
-          if (!res.ok) return;
-          var data = await res.json();
-          var list = [];
-          if (Array.isArray(data)) list = data;
-          else if (data && Array.isArray(data.guests)) list = data.guests;
-          if (list.length) mergeNames(list);
-        } catch (e) {
-          /* optional */
+      async function saveGuest(guest) {
+        if (useAirtable && guest.id) {
+          await updateAirtableGuest(guest.id, guest.rsvp);
+        } else if (!useAirtable) {
+          saveLocalGuests();
+        }
+      }
+
+      async function addGuest(name) {
+        if (useAirtable) {
+          var newGuest = await createAirtableGuest(name);
+          if (newGuest) {
+            guests.push(newGuest);
+          }
+        } else {
+          guests.push({ id: null, name: name, rsvp: "pending" });
+          saveLocalGuests();
+        }
+      }
+
+      async function removeGuest(index) {
+        var guest = guests[index];
+        if (useAirtable && guest.id) {
+          await deleteAirtableGuest(guest.id);
+        }
+        guests.splice(index, 1);
+        if (!useAirtable) {
+          saveLocalGuests();
+        }
+      }
+
+      function updateUIForStorageMode() {
+        var setupPanel = document.getElementById("airtableSetup");
+        var openAirtableBtn = document.getElementById("openAirtableBtn");
+        var switchStorageBtn = document.getElementById("switchStorageBtn");
+        var dataSourceLabel = document.getElementById("dataSourceLabel");
+        
+        if (useAirtable) {
+          setupPanel.hidden = true;
+          openAirtableBtn.hidden = false;
+          openAirtableBtn.href = AIRTABLE_INTERFACE_URL;
+          switchStorageBtn.hidden = false;
+          dataSourceLabel.textContent = "Synced with Airtable · Add guests and copy their personalized invites";
+        } else if (airtableToken) {
+          setupPanel.hidden = true;
+          openAirtableBtn.hidden = true;
+          switchStorageBtn.hidden = false;
+          dataSourceLabel.textContent = "Local storage (not synced) · Add guests and copy their personalized invites";
+        } else {
+          setupPanel.hidden = false;
+          openAirtableBtn.hidden = true;
+          switchStorageBtn.hidden = true;
+          dataSourceLabel.textContent = "Add guests and copy their personalized invites";
         }
       }
 
@@ -510,10 +698,15 @@
                                  '<option value="yes">Attending</option>' +
                                  '<option value="no">Declined</option>';
           rsvpSelect.value = guest.rsvp;
-          rsvpSelect.addEventListener("change", function () {
+          rsvpSelect.addEventListener("change", async function () {
             guests[index].rsvp = rsvpSelect.value;
-            saveGuests();
-            renderGuests();
+            try {
+              await saveGuest(guests[index]);
+              renderGuests();
+            } catch (e) {
+              showToast("Failed to update RSVP");
+              console.error(e);
+            }
           });
           
           rsvpRow.appendChild(rsvpLabel);
@@ -549,10 +742,15 @@
           delBtn.type = "button";
           delBtn.className = "btn btn-danger";
           delBtn.textContent = "Delete";
-          delBtn.addEventListener("click", function () {
-            guests.splice(index, 1);
-            saveGuests();
-            renderGuests();
+          delBtn.addEventListener("click", async function () {
+            if (!confirm("Delete " + guest.name + "?")) return;
+            try {
+              await removeGuest(index);
+              renderGuests();
+            } catch (e) {
+              showToast("Failed to delete guest");
+              console.error(e);
+            }
           });
 
           actions.appendChild(copyBtn);
@@ -582,12 +780,33 @@
         document.body.removeChild(ta);
       }
 
-      function showApp() {
+      async function showApp() {
         loginView.hidden = true;
         managerView.hidden = false;
-        guests = loadLocalGuests();
-        renderGuests();
-        tryFetchGuestsJson();
+        
+        airtableToken = getAirtableToken();
+        useAirtable = !!airtableToken;
+        
+        updateUIForStorageMode();
+        
+        if (useAirtable) {
+          try {
+            await loadGuests();
+            renderGuests();
+          } catch (e) {
+            showToast("Failed to load from Airtable");
+            console.error(e);
+            useAirtable = false;
+            updateUIForStorageMode();
+            await loadGuests();
+            renderGuests();
+          }
+        } else if (!airtableToken) {
+          // Show setup panel, don't load guests yet
+        } else {
+          await loadGuests();
+          renderGuests();
+        }
       }
 
       function showLogin() {
@@ -625,7 +844,7 @@
         showLogin();
       });
 
-      addForm.addEventListener("submit", function (e) {
+      addForm.addEventListener("submit", async function (e) {
         e.preventDefault();
         var name = guestNameInput.value.trim();
         if (!name) return;
@@ -633,12 +852,74 @@
           return g.name.toLowerCase() === name.toLowerCase();
         });
         if (!exists) {
-          guests.push({ name: name, rsvp: "pending" });
-          saveGuests();
-          renderGuests();
+          try {
+            await addGuest(name);
+            renderGuests();
+          } catch (e) {
+            showToast("Failed to add guest");
+            console.error(e);
+          }
         }
         guestNameInput.value = "";
         guestNameInput.focus();
+      });
+
+      document.getElementById("saveTokenBtn").addEventListener("click", async function () {
+        var tokenInput = document.getElementById("tokenInput");
+        var tokenError = document.getElementById("tokenError");
+        var token = tokenInput.value.trim();
+        
+        tokenError.classList.remove("show");
+        
+        if (!token) {
+          tokenError.textContent = "Please enter a token";
+          tokenError.classList.add("show");
+          return;
+        }
+        
+        setAirtableToken(token);
+        useAirtable = true;
+        
+        try {
+          await loadGuests();
+          updateUIForStorageMode();
+          renderGuests();
+          tokenInput.value = "";
+        } catch (e) {
+          tokenError.classList.add("show");
+          clearAirtableToken();
+          useAirtable = false;
+          updateUIForStorageMode();
+        }
+      });
+
+      document.getElementById("useLocalStorageBtn").addEventListener("click", async function () {
+        useAirtable = false;
+        updateUIForStorageMode();
+        await loadGuests();
+        renderGuests();
+      });
+
+      document.getElementById("switchStorageBtn").addEventListener("click", async function () {
+        if (useAirtable) {
+          if (confirm("Switch to local storage? Your browser will no longer sync with Airtable.")) {
+            useAirtable = false;
+            updateUIForStorageMode();
+            await loadGuests();
+            renderGuests();
+          }
+        } else {
+          if (airtableToken) {
+            if (confirm("Switch to Airtable sync? Changes will be saved to Airtable.")) {
+              useAirtable = true;
+              updateUIForStorageMode();
+              await loadGuests();
+              renderGuests();
+            }
+          } else {
+            document.getElementById("airtableSetup").hidden = false;
+          }
+        }
       });
 
       if (isAuthed()) showApp();
