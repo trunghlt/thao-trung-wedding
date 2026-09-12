@@ -671,12 +671,19 @@
       }
 
       function saveRsvpToAirtable(payload) {
+        // Airtable webhook does not send CORS headers for application/json,
+        // so browsers block those POSTs. form-urlencoded is a "simple" request
+        // that still reaches Airtable; mode:no-cors avoids a false client error.
+        var body = new URLSearchParams();
+        Object.keys(payload).forEach(function (key) {
+          var value = payload[key];
+          if (value === undefined || value === null) return;
+          body.append(key, String(value));
+        });
         return fetch(AIRTABLE_WEBHOOK, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        }).then(function (res) {
-          if (!res.ok) throw new Error("RSVP save failed");
+          mode: "no-cors",
+          body: body
         });
       }
 
