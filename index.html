@@ -707,7 +707,13 @@
             children: extras.children
           };
         } else {
-          payload = { name: name, rsvp: "Declined" };
+          payload = {
+            name: name,
+            rsvp: "Declined",
+            dietary: "",
+            allergies: "",
+            children: 0
+          };
         }
 
         saveRsvpToAirtable(payload).catch(function () {
