@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Thao & Trung — You're Invited</title>
-  <meta name="description" content="You're invited to the wedding of Thao & Trung — Saturday, 26 December 2026 at 4:00 PM, Furama Resort, Da Nang, Vietnam." />
+  <meta name="description" content="You're invited to the wedding of Thao & Trung — Saturday, 26 December 2026 at 2:00 PM, Furama Resort, Da Nang, Vietnam." />
   <meta property="og:title" content="Thao & Trung — Wedding Invitation" />
-  <meta property="og:description" content="Saturday, 26 December 2026 · 4:00 PM · Furama Resort, Da Nang" />
+  <meta property="og:description" content="Saturday, 26 December 2026 · 2:00 PM · Furama Resort, Da Nang" />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="og.jpg" />
   <meta name="theme-color" content="#e8dcc8" />
@@ -390,7 +390,7 @@
           <p class="pleasure">request the pleasure of your company</p>
           <div class="invite-ornament" aria-hidden="true"></div>
           <p class="when-line">Saturday, 26 December 2026</p>
-          <p class="time-line">4:00 PM</p>
+          <p class="time-line">2:00 PM</p>
           <p class="venue">Furama Resort</p>
           <p class="city">Da Nang, Vietnam</p>
         </div>
@@ -428,7 +428,7 @@
       <article class="panel">
         <h2>When</h2>
         <p class="big">Saturday, 26 December 2026</p>
-        <p class="muted">4:00 PM</p>
+        <p class="muted">2:00 PM</p>
         <div class="divider" aria-hidden="true"></div>
         <div class="actions">
           <a class="btn primary" id="add-cal" href="#">Add to calendar</a>
@@ -576,7 +576,7 @@
       });
 
       // ICS calendar download (local afternoon Da Nang = ICT, UTC+7)
-      // 16:00 ICT = 09:00 UTC on 2026-12-26; end assume 3 hours
+      // 14:00 ICT = 07:00 UTC on 2026-12-26; end assume 3 hours
       var ics = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
@@ -586,11 +586,11 @@
         "BEGIN:VEVENT",
         "UID:thao-trung-wedding-20261226@invite",
         "DTSTAMP:20260905T000000Z",
-        "DTSTART:20261226T090000Z",
-        "DTEND:20261226T120000Z",
+        "DTSTART:20261226T070000Z",
+        "DTEND:20261226T100000Z",
         "SUMMARY:Wedding of Thao & Trung",
         "LOCATION:Furama Resort\\, Da Nang\\, Vietnam",
-        "DESCRIPTION:Wedding celebration of Thao & Trung at Furama Resort\\, Da Nang. Ceremony begins at 4:00 PM.",
+        "DESCRIPTION:Wedding celebration of Thao & Trung at Furama Resort\\, Da Nang. Ceremony begins at 2:00 PM.",
         "END:VEVENT",
         "END:VCALENDAR"
       ].join("\r\n");
