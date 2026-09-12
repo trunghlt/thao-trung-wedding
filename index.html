@@ -365,6 +365,92 @@
       }
     }
 
+
+    /* Compact RSVP details form */
+    #rsvp-details {
+      text-align: left;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    #rsvp-details .rsvp-details-title {
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+    #rsvp-details .rsvp-details-hint {
+      text-align: center;
+      color: var(--sage-soft);
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    #rsvp-details .field {
+      margin-bottom: 0.95rem;
+    }
+    #rsvp-details label.field-label {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--sage);
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+    #rsvp-details .dietary-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    #rsvp-details .dietary-options label {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 1.05rem;
+      color: var(--ink);
+      cursor: pointer;
+      padding: 0.45rem 0.65rem;
+      border-radius: 10px;
+      border: 1px solid rgba(212, 166, 69, 0.28);
+      background: rgba(255, 250, 244, 0.7);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    #rsvp-details .dietary-options label:hover {
+      border-color: rgba(212, 166, 69, 0.55);
+      background: #fff;
+    }
+    #rsvp-details .dietary-options input[type="radio"] {
+      accent-color: var(--sage);
+      width: 1rem;
+      height: 1rem;
+      flex-shrink: 0;
+    }
+    #rsvp-details input[type="number"],
+    #rsvp-details textarea {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid rgba(212, 166, 69, 0.4);
+      border-radius: 10px;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 1.05rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #rsvp-details input[type="number"]:focus,
+    #rsvp-details textarea:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(212, 166, 69, 0.18);
+    }
+    #rsvp-details textarea {
+      min-height: 4.2rem;
+      resize: vertical;
+      line-height: 1.4;
+    }
+    #rsvp-details input[type="number"] {
+      max-width: 6.5rem;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; transition: none !important; }
       .petal-field { display: none !important; }
@@ -461,6 +547,31 @@
             <button class="btn" id="rsvp-no">Unable to attend</button>
           </div>
         </div>
+        <div id="rsvp-details" style="display: none;" hidden>
+          <p class="rsvp-details-title">A few details, please</p>
+          <p class="rsvp-details-hint">So we can plan the meal and seating</p>
+          <div class="divider" aria-hidden="true"></div>
+          <div class="field">
+            <span class="field-label">Dietary preference</span>
+            <div class="dietary-options" role="radiogroup" aria-label="Dietary preference">
+              <label><input type="radio" name="dietary" value="No restrictions" checked /> No restrictions</label>
+              <label><input type="radio" name="dietary" value="Vegetarian" /> Vegetarian</label>
+              <label><input type="radio" name="dietary" value="Other / see allergies" /> Other / see allergies</label>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label" for="rsvp-allergies">Allergies / notes <span style="font-weight:400;letter-spacing:0.06em;text-transform:none;color:var(--sage-soft);">(optional)</span></label>
+            <textarea id="rsvp-allergies" name="allergies" rows="3" placeholder="e.g. peanuts, shellfish…"></textarea>
+          </div>
+          <div class="field">
+            <label class="field-label" for="rsvp-children">How many children are you bringing?</label>
+            <input type="number" id="rsvp-children" name="children" min="0" step="1" value="0" inputmode="numeric" />
+          </div>
+          <div class="actions" style="margin-top: 0.85rem;">
+            <button class="btn primary" type="button" id="rsvp-confirm">Confirm RSVP</button>
+            <button class="btn" type="button" id="rsvp-back">Back</button>
+          </div>
+        </div>
         <div id="rsvp-confirmed" style="display: none;">
           <p class="big" id="rsvp-message"></p>
           <p class="muted" style="margin-top: 0.75rem;">Your response has been recorded.<br>Please share your updated invite link with your host.</p>
@@ -505,30 +616,44 @@
 
       // RSVP handling
       var rsvpPrompt = document.getElementById("rsvp-prompt");
+      var rsvpDetails = document.getElementById("rsvp-details");
       var rsvpConfirmed = document.getElementById("rsvp-confirmed");
       var rsvpMessage = document.getElementById("rsvp-message");
       var rsvpYesBtn = document.getElementById("rsvp-yes");
       var rsvpNoBtn = document.getElementById("rsvp-no");
+      var rsvpConfirmBtn = document.getElementById("rsvp-confirm");
+      var rsvpBackBtn = document.getElementById("rsvp-back");
+      var AIRTABLE_WEBHOOK = "https://hooks.airtable.com/workflows/v1/genericWebhook/appLMVQJ3ab9TqepP/wflMWgnLxZvm7Ey2G/wtrkS4pFkH2VtYW5V";
 
-      function saveRsvpToAirtable(name, response) {
-        var airtableRsvp = response === "yes" ? "Attending" : "Declined";
-        return fetch("https://hooks.airtable.com/workflows/v1/genericWebhook/appLMVQJ3ab9TqepP/wflMWgnLxZvm7Ey2G/wtrkS4pFkH2VtYW5V", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: name, rsvp: airtableRsvp })
-        }).then(function (res) {
-          if (!res.ok) throw new Error("RSVP save failed");
-        });
+      function showRsvpPrompt() {
+        rsvpPrompt.style.display = "";
+        rsvpDetails.style.display = "none";
+        rsvpDetails.hidden = true;
+        rsvpConfirmed.style.display = "none";
       }
 
-      function updateRsvp(response) {
+      function showRsvpDetails() {
+        rsvpPrompt.style.display = "none";
+        rsvpDetails.style.display = "block";
+        rsvpDetails.hidden = false;
+        rsvpConfirmed.style.display = "none";
+      }
+
+      function showRsvpConfirmed() {
+        rsvpPrompt.style.display = "none";
+        rsvpDetails.style.display = "none";
+        rsvpDetails.hidden = true;
+        rsvpConfirmed.style.display = "block";
+      }
+
+      function ensureGuestName() {
         var name = guest;
         if (!name) {
           name = (window.prompt("Please enter your name for the guest list:") || "").trim();
           name = name.replace(/[<>&"']/g, "");
           if (!name) {
             alert("We need your name to save your RSVP. Please try again.");
-            return;
+            return null;
           }
           guest = name;
           hello.textContent = "Dear " + guest + ",";
@@ -537,15 +662,34 @@
           nameParams.set("to", guest);
           window.history.replaceState({}, "", window.location.pathname + "?" + nameParams.toString());
         }
+        return guest;
+      }
+
+      function getDietarySelection() {
+        var checked = document.querySelector('input[name="dietary"]:checked');
+        return checked ? checked.value : "No restrictions";
+      }
+
+      function saveRsvpToAirtable(payload) {
+        return fetch(AIRTABLE_WEBHOOK, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }).then(function (res) {
+          if (!res.ok) throw new Error("RSVP save failed");
+        });
+      }
+
+      function finishRsvp(response, extras) {
+        var name = ensureGuestName();
+        if (!name) return;
 
         var newParams = new URLSearchParams(window.location.search);
         newParams.set("rsvp", response);
         if (guest) newParams.set("to", guest);
-        var newUrl = window.location.pathname + "?" + newParams.toString();
-        window.history.replaceState({}, "", newUrl);
+        window.history.replaceState({}, "", window.location.pathname + "?" + newParams.toString());
 
-        rsvpPrompt.style.display = "none";
-        rsvpConfirmed.style.display = "block";
+        showRsvpConfirmed();
 
         if (response === "yes") {
           rsvpMessage.textContent = "Thank you! We're delighted you'll be joining us.";
@@ -553,14 +697,26 @@
           rsvpMessage.textContent = "Thank you for letting us know. You'll be missed!";
         }
 
-        saveRsvpToAirtable(guest, response).catch(function () {
+        var payload;
+        if (response === "yes") {
+          payload = {
+            name: name,
+            rsvp: "Attending",
+            dietary: extras.dietary,
+            allergies: extras.allergies,
+            children: extras.children
+          };
+        } else {
+          payload = { name: name, rsvp: "Declined" };
+        }
+
+        saveRsvpToAirtable(payload).catch(function () {
           rsvpMessage.textContent += " (If this is wrong, please message Thao or Trung — we could not save automatically.)";
         });
       }
 
       if (rsvpStatus === "yes" || rsvpStatus === "no") {
-        rsvpPrompt.style.display = "none";
-        rsvpConfirmed.style.display = "block";
+        showRsvpConfirmed();
         if (rsvpStatus === "yes") {
           rsvpMessage.textContent = "Thank you! We're delighted you'll be joining us.";
         } else {
@@ -569,11 +725,28 @@
       }
 
       rsvpYesBtn.addEventListener("click", function () {
-        updateRsvp("yes");
+        showRsvpDetails();
+      });
+
+      rsvpBackBtn.addEventListener("click", function () {
+        showRsvpPrompt();
+      });
+
+      rsvpConfirmBtn.addEventListener("click", function () {
+        var allergiesEl = document.getElementById("rsvp-allergies");
+        var childrenEl = document.getElementById("rsvp-children");
+        var allergies = (allergiesEl.value || "").trim();
+        var childrenRaw = parseInt(childrenEl.value, 10);
+        var children = isNaN(childrenRaw) || childrenRaw < 0 ? 0 : childrenRaw;
+        finishRsvp("yes", {
+          dietary: getDietarySelection(),
+          allergies: allergies,
+          children: children
+        });
       });
 
       rsvpNoBtn.addEventListener("click", function () {
-        updateRsvp("no");
+        finishRsvp("no", null);
       });
 
       // ICS calendar download (local afternoon Da Nang = ICT, UTC+7)

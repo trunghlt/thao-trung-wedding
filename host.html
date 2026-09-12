@@ -230,6 +230,14 @@
       background: rgba(138, 160, 140, 0.15);
       color: var(--sage-soft);
     }
+
+    .guest-meta {
+      font-size: 0.95rem;
+      color: var(--sage-soft);
+      margin: -0.25rem 0 0.65rem;
+      line-height: 1.35;
+    }
+
     .guest-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; }
     .empty {
       text-align: center;
@@ -477,10 +485,16 @@
             var rsvpField = fields.RSVP || fields.rsvp || "Pending";
             var rsvpNormalized = rsvpField === "Attending" ? "yes" : 
                                  rsvpField === "Declined" ? "no" : "pending";
+            var childrenRaw = fields.Children;
+            var children = (childrenRaw === 0 || childrenRaw) ? Number(childrenRaw) : null;
+            if (children !== null && isNaN(children)) children = null;
             return {
               id: record.id,
               name: fields.Name || "",
-              rsvp: rsvpNormalized
+              rsvp: rsvpNormalized,
+              dietary: fields.Dietary || "",
+              allergies: fields["Allergies / notes"] || fields.Allergies || "",
+              children: children
             };
           }).filter(function (g) { return g.name; });
         } catch (e) {
@@ -575,7 +589,10 @@
               return {
                 id: item.id || null,
                 name: String(item.name).trim(),
-                rsvp: item.rsvp || "pending"
+                rsvp: item.rsvp || "pending",
+                dietary: item.dietary || "",
+                allergies: item.allergies || "",
+                children: (item.children === 0 || item.children) ? Number(item.children) : null
               };
             }
             return null;
@@ -712,6 +729,24 @@
           rsvpRow.appendChild(rsvpLabel);
           rsvpRow.appendChild(rsvpSelect);
 
+          var metaParts = [];
+          if (guest.dietary) metaParts.push(String(guest.dietary).trim());
+          if (guest.children !== null && guest.children !== undefined && guest.children !== "" && !isNaN(Number(guest.children))) {
+            var childCount = Number(guest.children);
+            if (childCount > 0) {
+              metaParts.push(childCount === 1 ? "1 child" : childCount + " children");
+            }
+          }
+          if (guest.allergies && String(guest.allergies).trim()) {
+            metaParts.push(String(guest.allergies).trim());
+          }
+          var metaEl = null;
+          if (metaParts.length) {
+            metaEl = document.createElement("div");
+            metaEl.className = "guest-meta";
+            metaEl.textContent = metaParts.join(" · ");
+          }
+
           var linkEl = document.createElement("a");
           linkEl.className = "link";
           linkEl.href = url;
@@ -757,6 +792,7 @@
           actions.appendChild(delBtn);
           li.appendChild(nameEl);
           li.appendChild(rsvpRow);
+          if (metaEl) li.appendChild(metaEl);
           li.appendChild(linkEl);
           li.appendChild(actions);
           guestListEl.appendChild(li);
