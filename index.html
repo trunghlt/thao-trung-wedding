@@ -366,6 +366,58 @@
     }
 
 
+
+    /* Pre-wedding photo album */
+    .album-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-top: 0.9rem;
+    }
+    .album-item {
+      position: relative;
+      margin: 0;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(212, 166, 69, 0.45);
+      background: var(--cream);
+      box-shadow: 0 8px 24px rgba(61, 52, 41, 0.12);
+      cursor: zoom-in;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .album-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(61, 52, 41, 0.18);
+    }
+    .album-item img {
+      display: block;
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+    }
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(28, 22, 16, 0.88);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      cursor: zoom-out;
+    }
+    .lightbox.is-open {
+      display: flex;
+    }
+    .lightbox img {
+      max-width: min(1080px, 94vw);
+      max-height: 88vh;
+      border-radius: 8px;
+      border: 1px solid rgba(212, 166, 69, 0.55);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    }
+
     /* Compact RSVP details form */
     #rsvp-details {
       text-align: left;
@@ -578,6 +630,23 @@
         </div>
       </article>
 
+      <article class="panel span-2" id="photo-album">
+        <h2>Pre-Wedding Photo Album</h2>
+        <p class="big">Thao &amp; Trung</p>
+        <p class="muted">Moments before our big day</p>
+        <div class="divider" aria-hidden="true"></div>
+        <div class="album-grid">
+          <figure class="album-item">
+            <img
+              src="photos/pre-wedding-1.jpg"
+              alt="Thao and Trung pre-wedding portrait by the water at golden hour"
+              loading="lazy"
+              decoding="async"
+            />
+          </figure>
+        </div>
+      </article>
+
       <article class="panel span-2">
         <h2>Travel &amp; Activities</h2>
         <p class="big">Explore Da Nang with Family</p>
@@ -593,6 +662,10 @@
     <p class="note">We can't wait to celebrate with you.</p>
     <footer>Thao &amp; Trung · 26.12.2026</footer>
   </main>
+
+  <div class="lightbox" id="album-lightbox" role="dialog" aria-modal="true" aria-label="Enlarged pre-wedding photo">
+    <img id="album-lightbox-img" src="" alt="" />
+  </div>
 
   <!-- Static card kept for og/fallback reference: card.jpg -->
 
@@ -761,6 +834,25 @@
       rsvpNoBtn.addEventListener("click", function () {
         finishRsvp("no", null);
       });
+
+      // Pre-wedding album lightbox
+      var lightbox = document.getElementById("album-lightbox");
+      var lightboxImg = document.getElementById("album-lightbox-img");
+      if (lightbox && lightboxImg) {
+        document.querySelectorAll(".album-item img").forEach(function (img) {
+          img.addEventListener("click", function () {
+            lightboxImg.src = img.src;
+            lightboxImg.alt = img.alt || "";
+            lightbox.classList.add("is-open");
+          });
+        });
+        lightbox.addEventListener("click", function () {
+          lightbox.classList.remove("is-open");
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") lightbox.classList.remove("is-open");
+        });
+      }
 
       // ICS calendar download (local afternoon Da Nang = ICT, UTC+7)
       // 14:00 ICT = 07:00 UTC on 2026-12-26; end assume 3 hours
